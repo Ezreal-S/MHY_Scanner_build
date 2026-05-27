@@ -55,7 +55,6 @@ jobs:
         runVcpkgInstall: true
       env:
         VCPKG_BUILD_TYPE: release
-        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
     - name: Build project (Release)
       run: |
