@@ -31,6 +31,13 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 add_compile_options(-Wno-deprecated-declarations)
 
 # ========================================
+# 编译优化配置
+# ========================================
+
+# 启用 LTO (链接时优化) - Release 构建
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+
+# ========================================
 # 依赖查找
 # ========================================
 

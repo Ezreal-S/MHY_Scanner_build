@@ -37,6 +37,11 @@ target_include_directories(MHY_Scanner_Core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../..
 )
 
+# 预编译头 (PCH) - 加速编译
+target_precompile_headers(MHY_Scanner_Core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../pch.h
+)
+
 # OpenSSL 链接 (通过 vcpkg)
 if(USE_OPENSSL)
     target_link_libraries(MHY_Scanner_Core PRIVATE OpenSSL::SSL OpenSSL::Crypto)

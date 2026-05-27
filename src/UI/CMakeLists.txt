@@ -43,6 +43,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # 添加当前源码目录到包含路径（用于 ui_*.h 找到自定义控件头文件）
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# 预编译头 (PCH) - 加速编译
+target_precompile_headers(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/pch.h
+)
+
 # macOS 框架
 target_link_libraries(${PROJECT_NAME} PRIVATE
     "-framework CoreGraphics"
