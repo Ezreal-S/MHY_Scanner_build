@@ -17,22 +17,6 @@
       "platform": "!windows"
     },
     {
-      "name": "qtdeclarative",
-      "platform": "!windows"
-    },
-    {
-      "name": "qtquickcontrols2",
-      "platform": "!windows"
-    },
-    {
-      "name": "qtwebchannel",
-      "platform": "!windows"
-    },
-    {
-      "name": "qtmultimedia",
-      "platform": "!windows"
-    },
-    {
       "name": "opencv"
     },
     {

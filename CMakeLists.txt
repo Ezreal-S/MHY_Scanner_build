@@ -39,8 +39,6 @@ set(QT_COMPONENTS
     Core
     Widgets
     Gui
-    Multimedia
-    MultimediaWidgets
 )
 
 find_package(Qt6 REQUIRED COMPONENTS ${QT_COMPONENTS})
@@ -125,8 +123,6 @@ list(APPEND PROJECT_LIBRARIES
     Qt6::Core
     Qt6::Widgets
     Qt6::Gui
-    Qt6::Multimedia
-    Qt6::MultimediaWidgets
 )
 
 # vcpkg 库

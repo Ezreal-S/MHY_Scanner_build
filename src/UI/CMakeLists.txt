@@ -33,18 +33,10 @@ find_package(Qt6 REQUIRED COMPONENTS
     Widgets
 )
 
-# Qt Multimedia
-find_package(Qt6 REQUIRED COMPONENTS
-    Multimedia
-    MultimediaWidgets
-)
-
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
-    Qt6::Multimedia
-    Qt6::MultimediaWidgets
     MHY_Scanner_Core
 )
 
