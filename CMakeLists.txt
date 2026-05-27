@@ -67,17 +67,26 @@ else()
     set(STATIC_TRIPLET "x64-osx")
 endif()
 
+# 支持 CI 环境使用 VCPKG_INSTALLED_DIR，本地环境使用 VCPKG_ROOT
+if(DEFINED ENV{VCPKG_INSTALLED_DIR})
+    set(VCPKG_INSTALLED_PATH "$ENV{VCPKG_INSTALLED_DIR}")
+elseif(DEFINED ENV{VCPKG_ROOT})
+    set(VCPKG_INSTALLED_PATH "$ENV{VCPKG_ROOT}/installed")
+else()
+    set(VCPKG_INSTALLED_PATH "")
+endif()
+
 # 查找静态库
 find_library(QRCODEGEN_LIB
     NAMES nayuki-qr-code-generator
     PATHS
-        "$ENV{VCPKG_ROOT}/installed/${STATIC_TRIPLET}/lib"
+        "${VCPKG_INSTALLED_PATH}/${STATIC_TRIPLET}/lib"
     NO_DEFAULT_PATH
 )
 
 if(QRCODEGEN_LIB)
     message(STATUS "Using nayuki-qr-code-generator from ${QRCODEGEN_LIB}")
-    include_directories("$ENV{VCPKG_ROOT}/installed/${STATIC_TRIPLET}/include")
+    include_directories("${VCPKG_INSTALLED_PATH}/${STATIC_TRIPLET}/include")
 else()
     message(FATAL_ERROR "nayuki-qr-code-generator not found. Please install via vcpkg: vcpkg install nayuki-qr-code-generator --triplet=${STATIC_TRIPLET}")
 endif()
