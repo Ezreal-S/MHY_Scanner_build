@@ -10,6 +10,7 @@ on:
 env:
   VCPKG_DEFAULT_TRIPLET: arm64-osx
   VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+  VCPKG_MAX_CONCURRENCY: 4
 
 jobs:
   build:
@@ -24,6 +25,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: ${{ runner.os }}-${{ matrix.arch }}-release
+        max-size: 500M
+
     - name: Install build dependencies
       run: |
         brew install cmake ninja pkg-config autoconf autoconf-archive automake libtool
@@ -31,14 +38,24 @@ jobs:
           ln -sf "$(brew --prefix)/bin/glibtoolize" "$(brew --prefix)/bin/libtoolize"
         fi
 
+    - name: Cache vcpkg packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ github.workspace }}/vcpkg_installed
+          ~/.cache/vcpkg
+        key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+        restore-keys: |
+          vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+
     - name: Setup vcpkg and install dependencies
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgJsonGlob: 'vcpkg.json'
         runVcpkgInstall: true
       env:
-        VCPKG_MAX_CONCURRENCY: 2
         VCPKG_BUILD_TYPE: release
+        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
     - name: Build project (Release)
       run: |
