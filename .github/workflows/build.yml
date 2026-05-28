@@ -63,9 +63,12 @@ jobs:
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
     - name: Download get_abogus from release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         mkdir -p 3rdparty/abogus_cpp/js
-        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/jsnjzxy/abogus_cpp/releases/latest \
+        DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_TOKEN" \
+          https://api.github.com/repos/jsnjzxy/abogus_cpp/releases/latest \
           | grep "browser_download_url.*macos-arm64" \
           | cut -d '"' -f 4)
         echo "Downloading: $DOWNLOAD_URL"
