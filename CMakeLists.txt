@@ -135,31 +135,8 @@ list(APPEND PROJECT_LIBRARIES
 # vcpkg 库
 list(APPEND PROJECT_LIBRARIES ${OpenCV_LIBS})
 
-# FFmpeg 库
-if(TARGET FFmpeg::avcodec)
-    list(APPEND PROJECT_LIBRARIES FFmpeg::avcodec)
-endif()
-if(TARGET FFmpeg::avdevice)
-    list(APPEND PROJECT_LIBRARIES FFmpeg::avdevice)
-endif()
-if(TARGET FFmpeg::avfilter)
-    list(APPEND PROJECT_LIBRARIES FFmpeg::avfilter)
-endif()
-if(TARGET FFmpeg::avformat)
-    list(APPEND PROJECT_LIBRARIES FFmpeg::avformat)
-endif()
-if(TARGET FFmpeg::avutil)
-    list(APPEND PROJECT_LIBRARIES FFmpeg::avutil)
-endif()
-if(TARGET FFmpeg::swresample)
-    list(APPEND PROJECT_LIBRARIES FFmpeg::swresample)
-endif()
-if(TARGET FFmpeg::swscale)
-    list(APPEND PROJECT_LIBRARIES FFmpeg::swscale)
-else()
-    # vcpkg 可能没有提供 swscale target，直接添加库名
-    list(APPEND PROJECT_LIBRARIES swscale)
-endif()
+# FFmpeg 库 - 使用 FFMPEG_LIBRARIES 变量（包含完整路径）
+list(APPEND PROJECT_LIBRARIES ${FFMPEG_LIBRARIES})
 
     # cpr
     list(APPEND PROJECT_LIBRARIES cpr::cpr)
