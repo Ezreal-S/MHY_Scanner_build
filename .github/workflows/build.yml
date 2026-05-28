@@ -55,6 +55,8 @@ jobs:
         runVcpkgInstall: true
       env:
         VCPKG_BUILD_TYPE: release
+        # 启用二进制缓存，加速重复构建
+        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
     - name: Build project (Release)
       run: |
