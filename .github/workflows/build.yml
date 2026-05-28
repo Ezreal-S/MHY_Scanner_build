@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build-windows:
@@ -29,35 +29,17 @@ jobs:
           arch: win64_msvc2022_64
           dir: ${{ github.workspace }}/qt
 
-      # ============ 3. 缓存 vcpkg + 已编译的包 ============
-      - name: Cache vcpkg packages
+      # ============ 3. 缓存 vcpkg 已编译的包 ============
+      - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         id: vcpkg-cache
         with:
-          path: |
-            C:/vcpkg
-            !C/vcpkg/.git
-          key: vcpkg-windows-${{ hashFiles('vcpkg.json', '.github/workflows/build.yml') }}
+          path: ${{ github.workspace }}/build/vcpkg_installed
+          key: vcpkg-win64-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-windows-
+            vcpkg-win64-
 
-      # ============ 4. 安装 vcpkg + 依赖 ============
-      - name: Setup vcpkg
-        run: |
-          if (-not (Test-Path "C:/vcpkg/vcpkg.exe")) {
-            git clone https://github.com/microsoft/vcpkg.git C:/vcpkg
-            cd C:/vcpkg
-            .\bootstrap-vcpkg.bat
-          }
-          C:/vcpkg/vcpkg.exe install opencv core imgproc imgcodecs highgui --triplet x64-windows
-          C:/vcpkg/vcpkg.exe install ffmpeg --triplet x64-windows
-          C:/vcpkg/vcpkg.exe install cpr --triplet x64-windows
-          C:/vcpkg/vcpkg.exe install nlohmann-json --triplet x64-windows
-          C:/vcpkg/vcpkg.exe install openssl --triplet x64-windows
-          C:/vcpkg/vcpkg.exe install nayuki-qr-code-generator --triplet x64-windows
-        shell: pwsh
-
-      # ============ 5. CMake 配置 ============
+      # ============ 4. CMake 配置（vcpkg 会自动根据 vcpkg.json 安装依赖） ============
       - name: Configure CMake
         run: |
           cmake -B build -G "Visual Studio 17 2022" -A x64 `
@@ -66,19 +48,19 @@ jobs:
             -DUSE_OPENSSL=ON
         shell: pwsh
 
-      # ============ 6. 编译 ============
+      # ============ 5. 编译 ============
       - name: Build
         run: cmake --build build --config Release
         shell: pwsh
 
-      # ============ 7. 收集产物 ============
+      # ============ 6. 部署 Qt DLL ============
       - name: Deploy Qt DLLs
         run: |
           ${{ github.workspace }}/qt/6.8.0/msvc2022_64/bin/windeployqt.exe `
             build/bin/Release/MHY_Scanner.exe
         shell: pwsh
 
-      # ============ 8. 打包上传 ============
+      # ============ 7. 上传产物 ============
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
