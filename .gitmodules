@@ -1,0 +1,3 @@
+[submodule "3rdparty/abogus_cpp"]
+	path = 3rdparty/abogus_cpp
+	url = https://github.com/jsnjzxy/abogus_cpp.git

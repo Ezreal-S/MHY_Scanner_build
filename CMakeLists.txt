@@ -96,11 +96,10 @@ else()
     message(FATAL_ERROR "nayuki-qr-code-generator not found. Please install via vcpkg: vcpkg install nayuki-qr-code-generator --triplet=${STATIC_TRIPLET}")
 endif()
 
-# abogus_cpp (抖音 a_bogus 算法，保留本地)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/abogus_cpp/abogus.cpp)
-    add_library(abogus_lib STATIC ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/abogus_cpp/abogus.cpp)
-    target_include_directories(abogus_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/abogus_cpp)
-    target_link_libraries(abogus_lib PRIVATE nlohmann_json::nlohmann_json)
+# abogus_cpp (抖音 a_bogus 算法，使用 submodule)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/abogus_cpp/CMakeLists.txt)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/abogus_cpp)
+    set(abogus_lib abogus)
 else()
     set(abogus_lib "")
 endif()
@@ -169,9 +168,9 @@ set(Install_Directory "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}_${_VERSION_}")
 
 install(TARGETS ${PROJECT_NAME} BUNDLE DESTINATION ${Install_Directory})
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/abogus_cpp/abogus_js/get_abogus)
-    install(FILES 3rdparty/abogus_cpp/abogus_js/get_abogus
-        DESTINATION ${Install_Directory}/abogus_cpp/abogus_js
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/abogus_cpp/js/build.sh)
+    install(FILES 3rdparty/abogus_cpp/js/build.sh
+        DESTINATION ${Install_Directory}/abogus_cpp/js
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
     )
 endif()
