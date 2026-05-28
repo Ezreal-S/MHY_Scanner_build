@@ -107,6 +107,8 @@ jobs:
       run: |
         app="artifacts/Release/MHY_Scanner.app"
         if [ -d "$app" ]; then
+          # 确保可执行文件有执行权限
+          chmod +x "$app/Contents/MacOS/MHY_Scanner"
           hdiutil create -volname "MHY_Scanner" \
             -srcfolder "$app" \
             -ov -format UDZO \
