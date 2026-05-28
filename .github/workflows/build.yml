@@ -10,8 +10,6 @@ on:
   workflow_dispatch:
 
 env:
-  VCPKG_DEFAULT_TRIPLET: arm64-osx
-  VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
   VCPKG_MAX_CONCURRENCY: 4
 
 jobs:
@@ -21,7 +19,18 @@ jobs:
 
     strategy:
       matrix:
-        arch: [arm64]
+        arch: [arm64, x64]
+        include:
+          - arch: arm64
+            triplet: arm64-osx
+            cmake_arch: arm64
+          - arch: x64
+            triplet: x64-osx
+            cmake_arch: x86_64
+
+    env:
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+      VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
     steps:
     - name: Checkout code
@@ -59,7 +68,6 @@ jobs:
         runVcpkgInstall: true
       env:
         VCPKG_BUILD_TYPE: release
-        # 启用二进制缓存，加速重复构建
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
     - name: Download get_abogus from release
@@ -69,7 +77,7 @@ jobs:
         mkdir -p 3rdparty/abogus_cpp/js
         DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_TOKEN" \
           https://api.github.com/repos/jsnjzxy/abogus_cpp/releases/latest \
-          | grep "browser_download_url.*macos-arm64.tar.gz" \
+          | grep "browser_download_url.*macos-${{ matrix.arch }}.tar.gz" \
           | cut -d '"' -f 4)
         echo "Downloading: $DOWNLOAD_URL"
         curl -L -o /tmp/get_abogus.tar.gz "$DOWNLOAD_URL"
@@ -80,7 +88,9 @@ jobs:
 
     - name: Build project (Release)
       run: |
-        cmake --preset Release-CI
+        cmake --preset Release-CI \
+          -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
+          -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_arch }}
         cmake --build --preset Release-CI
 
     - name: Bundle get_abogus
@@ -95,11 +105,9 @@ jobs:
       run: |
         APP_PATH="Release-CI_build/bin/Release/MHY_Scanner.app"
         if [ -d "$APP_PATH" ]; then
-          # Ensure get_abogus is executable before signing
           chmod +x "$APP_PATH/Contents/Resources/js/get_abogus" 2>/dev/null || true
           xattr -cr "$APP_PATH"
           codesign --force --deep -s - "$APP_PATH" || true
-          # Verify executable permission after signing
           ls -la "$APP_PATH/Contents/Resources/js/get_abogus"
           echo "Signing completed"
         else
@@ -123,6 +131,10 @@ jobs:
     permissions:
       contents: write
 
+    strategy:
+      matrix:
+        arch: [arm64, x64]
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -132,22 +144,20 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        name: MHY_Scanner-macOS-arm64-Release
+        name: MHY_Scanner-macOS-${{ matrix.arch }}-Release
         path: artifacts
 
     - name: Create DMG packages
       run: |
         app="artifacts/Release/MHY_Scanner.app"
         if [ -d "$app" ]; then
-          # 确保可执行文件有执行权限
           chmod +x "$app/Contents/MacOS/MHY_Scanner"
           chmod +x "$app/Contents/Resources/js/get_abogus" 2>/dev/null || true
-          # 验证权限
           ls -la "$app/Contents/Resources/js/get_abogus"
           hdiutil create -volname "MHY_Scanner" \
             -srcfolder "$app" \
             -ov -format UDZO \
-            "MHY_Scanner-macOS-arm64.dmg"
+            "MHY_Scanner-macOS-${{ matrix.arch }}.dmg"
         else
           echo "App not found"
           exit 1

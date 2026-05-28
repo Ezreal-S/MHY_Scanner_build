@@ -29,7 +29,7 @@
       "inherits": "macos-base",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "arm64-osx"
+        "VCPKG_TARGET_TRIPLET": "$env{VCPKG_TARGET_TRIPLET}"
       }
     },
     {
@@ -39,9 +39,10 @@
       "inherits": "macos-base",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_PREFIX_PATH": "$env{VCPKG_INSTALLED_DIR}/arm64-osx",
-        "VCPKG_TARGET_TRIPLET": "arm64-osx",
-        "VCPKG_INSTALLED_DIR": "$env{VCPKG_INSTALLED_DIR}"
+        "CMAKE_PREFIX_PATH": "$env{VCPKG_INSTALLED_DIR}/$env{VCPKG_TARGET_TRIPLET}",
+        "VCPKG_TARGET_TRIPLET": "$env{VCPKG_TARGET_TRIPLET}",
+        "VCPKG_INSTALLED_DIR": "$env{VCPKG_INSTALLED_DIR}",
+        "CMAKE_OSX_ARCHITECTURES": "$env{CMAKE_OSX_ARCHITECTURES}"
       }
     },
     {
@@ -50,7 +51,8 @@
       "description": "macOS 调试构建 (vcpkg)",
       "inherits": "macos-vcpkg-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx"
       }
     },
     {
@@ -59,7 +61,8 @@
       "description": "macOS 发布构建 (vcpkg)",
       "inherits": "macos-vcpkg-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx"
       }
     },
     {
@@ -68,7 +71,8 @@
       "description": "macOS 带调试信息的发布构建 (vcpkg)",
       "inherits": "macos-vcpkg-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx"
       }
     },
     {
