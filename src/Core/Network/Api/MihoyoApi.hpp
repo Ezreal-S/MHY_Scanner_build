@@ -234,7 +234,7 @@ inline auto CreateLoginCaptcha(const std::string_view mobile, const std::string_
     std::string bodystr{};
     if (size_t startPos = s.find_last_of("\n"); startPos != std::string::npos)
     {
-        bodystr = s.substr(startPos + 1, bodystr.size() - startPos);
+        bodystr = s.substr(startPos + 1);
     }
     nlohmann::json body{};
     body= nlohmann::json::parse(bodystr);
