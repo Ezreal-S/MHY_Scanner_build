@@ -91,8 +91,12 @@ jobs:
       run: |
         APP_PATH="Release-CI_build/bin/Release/MHY_Scanner.app"
         if [ -d "$APP_PATH" ]; then
+          # Ensure get_abogus is executable before signing
+          chmod +x "$APP_PATH/Contents/Resources/js/get_abogus" 2>/dev/null || true
           xattr -cr "$APP_PATH"
           codesign --force --deep -s - "$APP_PATH" || true
+          # Verify executable permission after signing
+          ls -la "$APP_PATH/Contents/Resources/js/get_abogus"
           echo "Signing completed"
         else
           echo "App not found at $APP_PATH"
