@@ -69,10 +69,11 @@ jobs:
         mkdir -p 3rdparty/abogus_cpp/js
         DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_TOKEN" \
           https://api.github.com/repos/jsnjzxy/abogus_cpp/releases/latest \
-          | grep "browser_download_url.*macos-arm64" \
+          | grep "browser_download_url.*macos-arm64.tar.gz" \
           | cut -d '"' -f 4)
         echo "Downloading: $DOWNLOAD_URL"
-        curl -L -o 3rdparty/abogus_cpp/js/get_abogus "$DOWNLOAD_URL"
+        curl -L -o /tmp/get_abogus.tar.gz "$DOWNLOAD_URL"
+        tar -xzf /tmp/get_abogus.tar.gz -C 3rdparty/abogus_cpp/js/
         chmod +x 3rdparty/abogus_cpp/js/get_abogus
         file 3rdparty/abogus_cpp/js/get_abogus
         ls -la 3rdparty/abogus_cpp/js/get_abogus
