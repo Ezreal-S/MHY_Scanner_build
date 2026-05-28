@@ -157,7 +157,13 @@ private:
 
                     std::lock_guard<std::mutex> lock(m_callbackMutex);
                     if (m_callback) {
-                        m_callback(code);
+                        try {
+                            m_callback(code);
+                        } catch (const std::exception& e) {
+                            std::cerr << "[VisionProcessor] Exception in callback: " << e.what() << std::endl;
+                        } catch (...) {
+                            std::cerr << "[VisionProcessor] Unknown exception in callback" << std::endl;
+                        }
                     }
                     // 找到第一个满足条件的就返回
                     return;
