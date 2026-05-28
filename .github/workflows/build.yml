@@ -90,6 +90,8 @@ jobs:
     needs: build
     runs-on: macos-15
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout code
@@ -98,22 +100,22 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
+        name: MHY_Scanner-macOS-arm64-Release
         path: artifacts
 
     - name: Create DMG packages
       run: |
-        for app in artifacts/*/MHY_Scanner.app; do
-          if [ -d "$app" ]; then
-            appname=$(basename "$app")
-            appdir=$(dirname "$app")
-            arch=$(basename "$appdir" | cut -d- -f3)
-
-            hdiutil create -volname "MHY_Scanner" \
-              -srcfolder "$app" \
-              -ov -format UDZO \
-              "MHY_Scanner-macOS-${arch}.dmg"
-          fi
-        done
+        app="artifacts/MHY_Scanner.app"
+        if [ -d "$app" ]; then
+          hdiutil create -volname "MHY_Scanner" \
+            -srcfolder "$app" \
+            -ov -format UDZO \
+            "MHY_Scanner-macOS-arm64.dmg"
+        else
+          echo "App not found, searching..."
+          find artifacts -name "*.app" -type d
+          exit 1
+        fi
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
