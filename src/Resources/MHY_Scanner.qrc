@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <!-- Qt 资源文件 -->
+        <!-- 添加需要嵌入的资源文件，例如：
+        <file>icons/icon.png</file>
+        <file>styles/style.qss</file>
+        -->
+    </qresource>
+</RCC>

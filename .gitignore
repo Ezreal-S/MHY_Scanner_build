@@ -71,7 +71,10 @@ ui_*.h
 *.exe
 *.out
 *.app
-MHY_Scanner*
+
+# MHY_Scanner build outputs (但不忽略源码资源文件)
+MHY_Scanner_*/
+!src/Resources/MHY_Scanner.*
 
 # Node.js / npm
 node_modules/
