@@ -66,8 +66,7 @@ target_link_libraries(MHY_Scanner_Core PRIVATE
 
 target_compile_definitions(MHY_Scanner_Core PRIVATE USE_SCREEN_CAPTURE_KIT)
 
-# 添加 abogus.cpp 到核心库
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../3rdparty/abogus_cpp/abogus.cpp)
-    target_sources(MHY_Scanner_Core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../3rdparty/abogus_cpp/abogus.cpp)
-    target_include_directories(MHY_Scanner_Core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../3rdparty/abogus_cpp)
+# 链接 abogus 库 (通过 submodule)
+if(TARGET abogus)
+    target_link_libraries(MHY_Scanner_Core PRIVATE abogus)
 endif()
