@@ -140,6 +140,9 @@ jobs:
         if [ -d "$app" ]; then
           # 确保可执行文件有执行权限
           chmod +x "$app/Contents/MacOS/MHY_Scanner"
+          chmod +x "$app/Contents/Resources/js/get_abogus" 2>/dev/null || true
+          # 验证权限
+          ls -la "$app/Contents/Resources/js/get_abogus"
           hdiutil create -volname "MHY_Scanner" \
             -srcfolder "$app" \
             -ov -format UDZO \
