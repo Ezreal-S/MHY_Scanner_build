@@ -1,173 +1,87 @@
-name: Build macOS
+name: Build MHY_Scanner
 
 on:
   push:
-    branches: [ main, develop ]
-    tags:
-      - 'v*'
+    branches: [ main, master ]
   pull_request:
-    branches: [ main, develop ]
-  workflow_dispatch:
-
-env:
-  VCPKG_MAX_CONCURRENCY: 4
+    branches: [ main, master ]
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
-  build:
-    name: Build on macOS ${{ matrix.arch }}
-    runs-on: macos-15
-
-    strategy:
-      matrix:
-        arch: [arm64, x64]
-        include:
-          - arch: arm64
-            triplet: arm64-osx
-            cmake_arch: arm64
-          - arch: x64
-            triplet: x64-osx
-            cmake_arch: x86_64
-
-    env:
-      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
-      VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
+  build-windows:
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      # ============ 1. 拉代码 ============
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
 
-    - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1
-      with:
-        key: ${{ runner.os }}-${{ matrix.arch }}-release
-        max-size: 500M
+      # ============ 2. 安装 Qt ============
+      - name: Install Qt 6.8
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.0'
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          dir: ${{ github.workspace }}/qt
 
-    - name: Install build dependencies
-      run: |
-        brew install cmake ninja pkg-config autoconf autoconf-archive automake libtool
-        if [ ! -f "$(brew --prefix)/bin/libtoolize" ]; then
-          ln -sf "$(brew --prefix)/bin/glibtoolize" "$(brew --prefix)/bin/libtoolize"
-        fi
+      # ============ 3. 缓存 vcpkg + 已编译的包 ============
+      - name: Cache vcpkg packages
+        uses: actions/cache@v4
+        id: vcpkg-cache
+        with:
+          path: |
+            C:/vcpkg
+            !C/vcpkg/.git
+          key: vcpkg-windows-${{ hashFiles('vcpkg.json', '.github/workflows/build.yml') }}
+          restore-keys: |
+            vcpkg-windows-
 
-    - name: Cache vcpkg packages
-      uses: actions/cache@v4
-      with:
-        path: |
-          ${{ github.workspace }}/vcpkg_installed
-          ~/.cache/vcpkg
-        key: vcpkg-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
-        restore-keys: |
-          vcpkg-${{ runner.os }}-${{ matrix.arch }}-
+      # ============ 4. 安装 vcpkg + 依赖 ============
+      - name: Setup vcpkg
+        run: |
+          if (-not (Test-Path "C:/vcpkg/vcpkg.exe")) {
+            git clone https://github.com/microsoft/vcpkg.git C:/vcpkg
+            cd C:/vcpkg
+            .\bootstrap-vcpkg.bat
+          }
+          C:/vcpkg/vcpkg.exe install opencv core imgproc imgcodecs highgui --triplet x64-windows
+          C:/vcpkg/vcpkg.exe install ffmpeg --triplet x64-windows
+          C:/vcpkg/vcpkg.exe install cpr --triplet x64-windows
+          C:/vcpkg/vcpkg.exe install nlohmann-json --triplet x64-windows
+          C:/vcpkg/vcpkg.exe install openssl --triplet x64-windows
+          C:/vcpkg/vcpkg.exe install nayuki-qr-code-generator --triplet x64-windows
+        shell: pwsh
 
-    - name: Setup vcpkg and install dependencies
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgJsonGlob: 'vcpkg.json'
-        runVcpkgInstall: true
-      env:
-        VCPKG_BUILD_TYPE: release
-        VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+      # ============ 5. CMake 配置 ============
+      - name: Configure CMake
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
+            -DCMAKE_PREFIX_PATH="${{ github.workspace }}/qt/6.8.0/msvc2022_64" `
+            -DUSE_OPENSSL=ON
+        shell: pwsh
 
-    - name: Download get_abogus from release
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        mkdir -p 3rdparty/abogus_cpp/js
-        DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_TOKEN" \
-          https://api.github.com/repos/jsnjzxy/abogus_cpp/releases/latest \
-          | grep "browser_download_url.*macos-${{ matrix.arch }}.tar.gz" \
-          | cut -d '"' -f 4)
-        echo "Downloading: $DOWNLOAD_URL"
-        curl -L -o /tmp/get_abogus.tar.gz "$DOWNLOAD_URL"
-        tar -xzf /tmp/get_abogus.tar.gz -C 3rdparty/abogus_cpp/js/
-        chmod +x 3rdparty/abogus_cpp/js/get_abogus
-        file 3rdparty/abogus_cpp/js/get_abogus
-        ls -la 3rdparty/abogus_cpp/js/get_abogus
+      # ============ 6. 编译 ============
+      - name: Build
+        run: cmake --build build --config Release
+        shell: pwsh
 
-    - name: Build project (Release)
-      run: |
-        cmake --preset Release-CI \
-          -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
-          -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_arch }}
-        cmake --build --preset Release-CI
+      # ============ 7. 收集产物 ============
+      - name: Deploy Qt DLLs
+        run: |
+          ${{ github.workspace }}/qt/6.8.0/msvc2022_64/bin/windeployqt.exe `
+            build/bin/Release/MHY_Scanner.exe
+        shell: pwsh
 
-    - name: Bundle get_abogus
-      run: |
-        APP_PATH="Release-CI_build/bin/Release/MHY_Scanner.app"
-        mkdir -p "$APP_PATH/Contents/Resources/js"
-        cp 3rdparty/abogus_cpp/js/get_abogus "$APP_PATH/Contents/Resources/js/"
-        chmod +x "$APP_PATH/Contents/Resources/js/get_abogus"
-        echo "get_abogus bundled to $APP_PATH/Contents/Resources/js/"
-
-    - name: Ad-hoc signing
-      run: |
-        APP_PATH="Release-CI_build/bin/Release/MHY_Scanner.app"
-        if [ -d "$APP_PATH" ]; then
-          chmod +x "$APP_PATH/Contents/Resources/js/get_abogus" 2>/dev/null || true
-          xattr -cr "$APP_PATH"
-          codesign --force --deep -s - "$APP_PATH" || true
-          ls -la "$APP_PATH/Contents/Resources/js/get_abogus"
-          echo "Signing completed"
-        else
-          echo "App not found at $APP_PATH"
-          ls -la Release-CI_build/bin/Release/ || true
-          exit 1
-        fi
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MHY_Scanner-macOS-${{ matrix.arch }}-Release
-        path: Release-CI_build/bin/**/MHY_Scanner.app
-        retention-days: 7
-
-  release:
-    name: Create Release
-    needs: build
-    runs-on: macos-15
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write
-
-    strategy:
-      matrix:
-        arch: [arm64, x64]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: MHY_Scanner-macOS-${{ matrix.arch }}-Release
-        path: artifacts
-
-    - name: Create DMG packages
-      run: |
-        app="artifacts/Release/MHY_Scanner.app"
-        if [ -d "$app" ]; then
-          chmod +x "$app/Contents/MacOS/MHY_Scanner"
-          chmod +x "$app/Contents/Resources/js/get_abogus" 2>/dev/null || true
-          ls -la "$app/Contents/Resources/js/get_abogus"
-          hdiutil create -volname "MHY_Scanner" \
-            -srcfolder "$app" \
-            -ov -format UDZO \
-            "MHY_Scanner-macOS-${{ matrix.arch }}.dmg"
-        else
-          echo "App not found"
-          exit 1
-        fi
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: MHY_Scanner-macOS-*.dmg
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # ============ 8. 打包上传 ============
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MHY_Scanner-windows-x64
+          path: build/bin/Release/
+          retention-days: 30
