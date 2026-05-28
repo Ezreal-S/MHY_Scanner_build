@@ -62,10 +62,25 @@ jobs:
         # 启用二进制缓存，加速重复构建
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
+    - name: Build get_abogus executable
+      run: |
+        cd 3rdparty/abogus_cpp/js
+        npm install
+        npm run build:macos-arm64
+        ls -la get_abogus
+
     - name: Build project (Release)
       run: |
         cmake --preset Release-CI
         cmake --build --preset Release-CI
+
+    - name: Bundle get_abogus
+      run: |
+        APP_PATH="Release-CI_build/bin/Release/MHY_Scanner.app"
+        mkdir -p "$APP_PATH/Contents/Resources/js"
+        cp 3rdparty/abogus_cpp/js/get_abogus "$APP_PATH/Contents/Resources/js/"
+        chmod +x "$APP_PATH/Contents/Resources/js/get_abogus"
+        echo "get_abogus bundled to $APP_PATH/Contents/Resources/js/"
 
     - name: Ad-hoc signing
       run: |

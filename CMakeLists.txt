@@ -168,9 +168,10 @@ set(Install_Directory "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}_${_VERSION_}")
 
 install(TARGETS ${PROJECT_NAME} BUNDLE DESTINATION ${Install_Directory})
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/abogus_cpp/js/build.sh)
-    install(FILES 3rdparty/abogus_cpp/js/build.sh
-        DESTINATION ${Install_Directory}/abogus_cpp/js
+# 安装 get_abogus 到 app bundle (macOS)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/abogus_cpp/js/get_abogus)
+    install(FILES 3rdparty/abogus_cpp/js/get_abogus
+        DESTINATION ${Install_Directory}/MHY_Scanner.app/Contents/Resources/js
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
     )
 endif()
