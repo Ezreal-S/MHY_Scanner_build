@@ -191,7 +191,9 @@ void QrCodeLoginTab::checkLoginState()
 
         case decltype(result.StateType)::Scanned:
             QMetaObject::invokeMethod(this, [this]() {
-                m_qrCodeLabel->setText("正在登录\n\n请在手机上点击「确认登录」");
+                if (m_qrCodeLabel) {
+                    m_qrCodeLabel->setText("正在登录\n\n请在手机上点击「确认登录」");
+                }
             });
             break;
 
@@ -200,13 +202,15 @@ void QrCodeLoginTab::checkLoginState()
             if (resultStoken.has_value()) {
                 std::string name = getMysUserName(result.uid);
                 const auto& [mid, stoken] = *resultStoken;
-                // 先发射登录成功信号，让对话框关闭
+                // 所有 UI 操作都在主线程中执行
                 QMetaObject::invokeMethod(this, [this, name, stoken, uid = result.uid, mid]() {
+                    // 检查对象是否仍然有效
+                    if (m_qrCodeLabel) {
+                        m_qrCodeLabel->setText("登录成功！");
+                    }
+                    stopTimer();
                     emit loginSuccess(name, stoken, uid, mid, "官服");
                 }, Qt::QueuedConnection);
-                // 然后更新 UI（注意：此时对话框可能已关闭）
-                m_qrCodeLabel->setText("登录成功！");
-                stopTimer();
             } else {
                 QMetaObject::invokeMethod(this, [this]() {
                     emit showMessageRequested("获取STOKEN失败！");
@@ -218,13 +222,17 @@ void QrCodeLoginTab::checkLoginState()
         case decltype(result.StateType)::Expired: {
             QMetaObject::invokeMethod(this, [this]() {
                 // 显示过期二维码
-                QImage expiredImage = CV_8UC1_MatToQImage(m_qrCodeMat - cv::Scalar(200));
-                QPixmap pixmap = QPixmap::fromImage(expiredImage);
-                QPixmap scaledPixmap = pixmap.scaled(m_qrCodeLabel->size(),
-                                                     Qt::KeepAspectRatio,
-                                                     Qt::SmoothTransformation);
-                m_qrCodeLabel->setPixmap(scaledPixmap);
-                m_refreshButton->setVisible(true);
+                if (m_qrCodeLabel && !m_qrCodeMat.empty()) {
+                    QImage expiredImage = CV_8UC1_MatToQImage(m_qrCodeMat - cv::Scalar(200));
+                    QPixmap pixmap = QPixmap::fromImage(expiredImage);
+                    QPixmap scaledPixmap = pixmap.scaled(m_qrCodeLabel->size(),
+                                                         Qt::KeepAspectRatio,
+                                                         Qt::SmoothTransformation);
+                    m_qrCodeLabel->setPixmap(scaledPixmap);
+                }
+                if (m_refreshButton) {
+                    m_refreshButton->setVisible(true);
+                }
                 stopTimer();
             });
             return;
