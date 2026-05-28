@@ -62,16 +62,13 @@ jobs:
         # 启用二进制缓存，加速重复构建
         VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
-    - name: Download get_abogus from release
+    - name: Build get_abogus executable
       run: |
-        mkdir -p 3rdparty/abogus_cpp/js
-        DOWNLOAD_URL=$(curl -s https://api.github.com/repos/jsnjzxy/abogus_cpp/releases/latest \
-          | grep "browser_download_url.*get_abogus\"" \
-          | cut -d '"' -f 4)
-        echo "Downloading: $DOWNLOAD_URL"
-        curl -L -o 3rdparty/abogus_cpp/js/get_abogus "$DOWNLOAD_URL"
-        chmod +x 3rdparty/abogus_cpp/js/get_abogus
-        ls -la 3rdparty/abogus_cpp/js/get_abogus
+        cd 3rdparty/abogus_cpp/js
+        npm install
+        npm run build:macos-arm64
+        file get_abogus
+        ls -la get_abogus
 
     - name: Build project (Release)
       run: |
