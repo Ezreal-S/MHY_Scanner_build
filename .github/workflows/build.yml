@@ -105,15 +105,14 @@ jobs:
 
     - name: Create DMG packages
       run: |
-        app="artifacts/MHY_Scanner.app"
+        app="artifacts/Release/MHY_Scanner.app"
         if [ -d "$app" ]; then
           hdiutil create -volname "MHY_Scanner" \
             -srcfolder "$app" \
             -ov -format UDZO \
             "MHY_Scanner-macOS-arm64.dmg"
         else
-          echo "App not found, searching..."
-          find artifacts -name "*.app" -type d
+          echo "App not found"
           exit 1
         fi
 
